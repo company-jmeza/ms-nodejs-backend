@@ -41,7 +41,7 @@ jobs:
                   creds: ${{ secrets.AZURE_CREDENTIALS }}
 
             - name: Validar variable
-                run: |
+              run: |
                     echo "APELLIDO=${{ vars.APELLIDO }}"
                     echo "ACR=acr${{ vars.APELLIDO }}"
             - name: Docker Login to ACR
