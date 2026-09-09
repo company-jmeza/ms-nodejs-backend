@@ -1,0 +1,39 @@
+name: Build Deploy Flow
+
+on:
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: "Ambiente de despliegue"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - prd
+      nombre_aplicacion:
+        description: "Nombre de la aplicacion"
+        required: true
+        default: "ms-nodejs-backend"
+        type: string
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Construir aplicacion
+        run: echo "Construyendo app ${{ inputs.nombre_aplicacion }}"
+      - name: Confirmar construccion
+        run: echo "App ${{ inputs.nombre_aplicacion }} construida"
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Desplegar en ambiente
+        run: echo "Desplegando en ambiente ${{ inputs.ambiente }}"
+      - name: Confirmar despliegue
+        run: echo "Aplicacion ${{ inputs.nombre_aplicacion }} desplegada en ${{ inputs.ambiente }}"
