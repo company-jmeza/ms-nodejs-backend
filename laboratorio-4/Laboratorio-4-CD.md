@@ -11,7 +11,9 @@
 
 Implementar un flujo de integracion y despliegue continuo para una aplicacion Node.js. El flujo debe ejecutar pruebas, generar un artefacto, construir una imagen Docker, publicarla en Azure Container Registry y desplegar la misma version de la imagen en Azure Container Apps para los ambientes `dev`, `qa` y `prd`, con aprobaciones manuales antes de promover a `qa` y `prd`.
 
-## Resumen de resultados
+## Ejercicio N° 1 - Configuracion de ambiente y despliegue
+
+### Resumen de resultados
 
 | Actividad | Resultado | Evidencia |
 | --- | --- | --- |
@@ -24,7 +26,7 @@ Implementar un flujo de integracion y despliegue continuo para una aplicacion No
 | Aprobacion y despliegue `prd` | Exitoso | Aprobado por `mike1594` y HTTP 200 |
 | Pipeline completo | Exitoso | Run `34708867118`, duracion 4 min 48 s |
 
-## 1. Infraestructura y configuracion previa
+### 1. Infraestructura y configuracion previa
 
 El Laboratorio 3 dejo preparados los recursos y controles requeridos por el flujo de CD:
 
@@ -47,7 +49,7 @@ Los valores de `API_PROVIDER_URL` usados fueron:
 | Calidad | `qa` | `https://qa.api.com` |
 | Produccion | `prd` | `https://api.com` |
 
-## 2. Implementacion del workflow
+### 2. Implementacion del workflow
 
 Se activo `.github/workflows/main.yml` con disparador `push` sobre la rama `main`. El workflow anterior de SonarQube fue retirado de `.github/workflows` y conservado como evidencia en `laboratorio-2/archivo/build-sonarqube.yml`; esto evita ejecutar un analisis contra la VM de SonarQube que ya habia sido eliminada.
 
@@ -70,7 +72,7 @@ echo "short_sha=$(git rev-parse --short $GITHUB_SHA)" >> "$GITHUB_OUTPUT"
 
 El commit que activo el pipeline fue [`f81e405`](https://github.com/company-jmeza/ms-nodejs-backend/commit/f81e4058022db7225047f734d6f950942f24bc6f), con el mensaje `Add Azure Container Apps CD workflow`.
 
-## 3. Integracion continua y publicacion de imagen
+### 3. Integracion continua y publicacion de imagen
 
 El job `CI` completo correctamente los siguientes pasos:
 
@@ -109,7 +111,7 @@ _Figura 2. Repositorio `my-nodejs-app` creado en `acrjmeza`._
 
 _Figura 3. Tag inmutable `f81e405` publicado en Azure Container Registry._
 
-## 4. Despliegue en desarrollo
+### 4. Despliegue en desarrollo
 
 Al terminar `CI`, el job `CD [dev]` configuro el acceso de `aca-ms-jmeza-dev` al registro mediante su identidad administrada y actualizo la aplicacion con la imagen `f81e405`.
 
@@ -125,7 +127,7 @@ La API desplegada en desarrollo respondio HTTP 200 y expuso en sus metadatos el 
 
 _Figura 5. Respuesta de `/api/items` en el ambiente `dev`._
 
-## 5. Aprobacion y despliegue en calidad
+### 5. Aprobacion y despliegue en calidad
 
 El ambiente protegido `approval-qa` solicito revision manual. El usuario `mike1594` aprobo la promocion y GitHub habilito el job `CD [qa]`.
 
@@ -157,7 +159,7 @@ La API de calidad respondio HTTP 200 y mostro el proveedor `https://qa.api.com`.
 
 _Figura 10. Respuesta de `/api/items` en el ambiente `qa`._
 
-## 6. Aprobacion y despliegue en produccion
+### 6. Aprobacion y despliegue en produccion
 
 Despues del despliegue de calidad, GitHub Actions solicito la aprobacion del ambiente `approval-prd`. El usuario `mike1594` aprobo la promocion y el job `CD [prd]` completo todos sus pasos.
 
@@ -171,7 +173,7 @@ La API de produccion respondio HTTP 200 y mostro el proveedor `https://api.com`.
 
 _Figura 12. Respuesta de `/api/items` en el ambiente `prd`._
 
-## 7. Resultado integral del pipeline
+### 7. Resultado integral del pipeline
 
 El run [`34708867118`](https://github.com/company-jmeza/ms-nodejs-backend/actions/runs/34708867118) finalizo con resultado `Success` y duracion total de 4 minutos 48 segundos.
 
@@ -194,7 +196,7 @@ La seccion **Deployment protection rules** conserva la trazabilidad de las dos d
 
 _Figura 14. Registro de aprobaciones para `approval-qa` y `approval-prd`._
 
-## 8. Validacion final
+### 8. Validacion final
 
 Antes de iniciar la limpieza se consultaron los tres recursos con Azure CLI. Los tres se encontraban en estado `Running`, usaban la revision `0000001` y apuntaban exactamente a `acrjmeza.azurecr.io/my-nodejs-app:f81e405`.
 
