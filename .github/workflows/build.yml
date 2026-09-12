@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: CI
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo fuente
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Obtener SHA corto
+        id: short
+        run: echo "short_sha=$(git rev-parse --short $GITHUB_SHA)" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar pruebas unitarias
+        run: npm run test:unit
+
+      - name: Ejecutar pruebas de integracion
+        run: npm run test:integration
+
+      - name: Crear proyecto en SonarQube
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          PROJECT_KEY="my-nodejs-app"
+          PROJECT_NAME="My NodeJS App"
+          echo "Verificando si el proyecto existe..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/components/show?component=$PROJECT_KEY")
+          if [ "$RESPONSE" -eq 404 ]; then
+            echo "Proyecto no encontrado, creando..."
+            curl -fsS -u "$SONAR_TOKEN:" -X POST "$SONAR_HOST_URL/api/projects/create" \
+              --data-urlencode "name=$PROJECT_NAME" \
+              --data-urlencode "project=$PROJECT_KEY"
+          else
+            echo "El proyecto existe o la API devolvio el codigo $RESPONSE"
+          fi
+
+      - name: Analizar codigo con SonarQube
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+      - name: Crear archivo ZIP del proyecto
+        run: zip -r build-artifact.zip . -x "node_modules/*" ".git/*" "build-artifact.zip"
+
+      - name: Subir artefacto ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: build-artifact.zip
+
+      - name: Configurar credenciales de Registry de Imagenes
+        run: echo "[To-Do] Autenticar en Registry"
+
+      - name: Construir, etiquetar y subir imagen de Docker
+        run: echo "[To-Do] Generar imagen"
